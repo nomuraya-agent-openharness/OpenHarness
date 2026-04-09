@@ -34,6 +34,19 @@ def _decode_task_worker_line(raw: str) -> str:
     return stripped
 
 
+def _normalize_tool_list(tools: list[str] | None) -> list[str] | None:
+    """Expand comma-separated tool names into a flat list.
+
+    Typer passes --allowed-tools a,b,c as ["a,b,c"], not ["a","b","c"].
+    """
+    if not tools:
+        return None
+    result = []
+    for item in tools:
+        result.extend(t.strip() for t in item.split(",") if t.strip())
+    return result or None
+
+
 async def run_repl(
     *,
     prompt: str | None = None,
