@@ -298,6 +298,7 @@ async def build_runtime(
             "session_id": session_id,
             **restored_metadata,
         },
+        allowed_tools=list(settings.permission.allowed_tools) or None,
     )
     # Restore messages from a saved session if provided
     if restore_messages:
