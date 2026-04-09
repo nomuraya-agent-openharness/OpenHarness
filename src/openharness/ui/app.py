@@ -212,6 +212,7 @@ async def run_print_mode(
         api_client=api_client,
         permission_prompt=_noop_permission,
         ask_user_prompt=_noop_ask,
+        allowed_tools=allowed_tools,
     )
     await start_runtime(bundle)
 
