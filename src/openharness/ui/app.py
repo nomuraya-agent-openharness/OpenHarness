@@ -180,6 +180,7 @@ async def run_print_mode(
     api_client: SupportsStreamingMessages | None = None,
     permission_mode: str | None = None,
     max_turns: int | None = None,
+    allowed_tools: list[str] | None = None,
 ) -> None:
     """Non-interactive mode: submit prompt, stream output, exit."""
     from openharness.engine.stream_events import (
