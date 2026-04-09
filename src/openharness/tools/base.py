@@ -70,6 +70,14 @@ class ToolRegistry:
         """Return all registered tools."""
         return list(self._tools.values())
 
-    def to_api_schema(self) -> list[dict[str, Any]]:
-        """Return all tool schemas in API format."""
-        return [tool.to_api_schema() for tool in self._tools.values()]
+    def to_api_schema(self, allowed: list[str] | None = None) -> list[dict[str, Any]]:
+        """Return tool schemas in API format.
+
+        Args:
+            allowed: If non-empty, only include tools whose name is in this list.
+                     Empty list or None means include all tools.
+        """
+        tools = self._tools.values()
+        if allowed:
+            tools = [t for t in tools if t.name in allowed]
+        return [tool.to_api_schema() for tool in tools]
