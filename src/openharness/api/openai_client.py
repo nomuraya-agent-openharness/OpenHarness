@@ -391,7 +391,16 @@ class OpenAICompatibleClient:
     @staticmethod
     def _is_retryable(exc: Exception) -> bool:
         status = getattr(exc, "status_code", None)
-        if status and status in {429, 500, 502, 503}:
+        if status == 429:
+            # 日次クォータ超過（TPD/token_quota）はリトライ不要 → 即次プロバイダへ
+            msg = str(exc).lower()
+            if any(k in msg for k in (
+                "tokens per day", "token_quota_exceeded", "quota",
+                "tokens_limit_reached", "tokens per minute limit",
+            )):
+                return False
+            return True
+        if status and status in {500, 502, 503}:
             return True
         if isinstance(exc, (ConnectionError, TimeoutError, OSError)):
             return True
