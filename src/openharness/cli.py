@@ -1384,6 +1384,7 @@ def main(
                 api_format=api_format,
                 permission_mode=permission_mode,
                 max_turns=max_turns,
+                allowed_tools=allowed_tools,
             )
         )
         return
