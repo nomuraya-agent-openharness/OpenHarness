@@ -350,3 +350,60 @@ class TestStreamMessageTokenParams:
         assert fake_sdk.chat.completions.last_kwargs is not None
         assert "max_tokens" in fake_sdk.chat.completions.last_kwargs
         assert "max_completion_tokens" not in fake_sdk.chat.completions.last_kwargs
+
+
+class TestIsRetryable:
+    """_is_retryable() の設計判定テスト。
+
+    設計方針: RPM/TPD/クォータ系429は即False（即次プロバイダへ）。
+    一時的なネットワーク障害や5xx系は True でリトライ。
+    """
+
+    class _Exc(Exception):
+        def __init__(self, status: int, msg: str):
+            super().__init__(msg)
+            self.status_code = status
+
+    def E(self, status: int, msg: str) -> Exception:
+        return self._Exc(status, msg)
+
+    def test_daily_quota_429_not_retryable(self):
+        assert OpenAICompatibleClient._is_retryable(self.E(429, "tokens per day limit exceeded")) is False
+
+    def test_token_quota_exceeded_not_retryable(self):
+        assert OpenAICompatibleClient._is_retryable(self.E(429, "token_quota_exceeded")) is False
+
+    def test_quota_string_not_retryable(self):
+        assert OpenAICompatibleClient._is_retryable(self.E(429, "quota exceeded")) is False
+
+    def test_rpm_limit_not_retryable(self):
+        # limit_rpm: 1分待てば回復するが、フォールバック速度優先で即スキップ
+        assert OpenAICompatibleClient._is_retryable(self.E(429, "Rate limit exceeded: limit_rpm/model")) is False
+
+    def test_rpd_limit_not_retryable(self):
+        assert OpenAICompatibleClient._is_retryable(self.E(429, "Rate limit exceeded: limit_rpd")) is False
+
+    def test_tpd_limit_not_retryable(self):
+        assert OpenAICompatibleClient._is_retryable(self.E(429, "limit_tpd exceeded")) is False
+
+    def test_unknown_429_is_retryable(self):
+        # クォータ系キーワードが含まれない429は一時的とみなしてリトライ
+        assert OpenAICompatibleClient._is_retryable(self.E(429, "Too many requests")) is True
+
+    def test_server_error_500_retryable(self):
+        assert OpenAICompatibleClient._is_retryable(self.E(500, "Internal Server Error")) is True
+
+    def test_server_error_503_retryable(self):
+        assert OpenAICompatibleClient._is_retryable(self.E(503, "Service Unavailable")) is True
+
+    def test_connection_error_retryable(self):
+        assert OpenAICompatibleClient._is_retryable(ConnectionError("connection refused")) is True
+
+    def test_timeout_retryable(self):
+        assert OpenAICompatibleClient._is_retryable(TimeoutError("timed out")) is True
+
+    def test_auth_error_not_retryable(self):
+        assert OpenAICompatibleClient._is_retryable(self.E(401, "Unauthorized")) is False
+
+    def test_bad_request_not_retryable(self):
+        assert OpenAICompatibleClient._is_retryable(self.E(400, "Bad request")) is False
