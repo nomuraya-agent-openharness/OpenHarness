@@ -216,6 +216,7 @@ async def run_print_mode(
 
     collected_text = ""
     events_list: list[dict] = []
+    api_error_occurred = False
 
     try:
         async def _print_system(message: str) -> None:
@@ -228,7 +229,7 @@ async def run_print_mode(
                 events_list.append(obj)
 
         async def _render_event(event: StreamEvent) -> None:
-            nonlocal collected_text
+            nonlocal collected_text, api_error_occurred
             if isinstance(event, AssistantTextDelta):
                 collected_text += event.text
                 if output_format == "text":
@@ -257,6 +258,7 @@ async def run_print_mode(
                     print(json.dumps(obj), flush=True)
                     events_list.append(obj)
             elif isinstance(event, ErrorEvent):
+                api_error_occurred = True
                 if output_format == "text":
                     print(event.message, file=sys.stderr)
                 elif output_format == "stream-json":
@@ -298,5 +300,8 @@ async def run_print_mode(
         if output_format == "json":
             result = {"type": "result", "text": collected_text.strip()}
             print(json.dumps(result))
+
+        if api_error_occurred:
+            raise SystemExit(1)
     finally:
         await close_runtime(bundle)
