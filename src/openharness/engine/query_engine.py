@@ -36,6 +36,7 @@ class QueryEngine:
         ask_user_prompt: AskUserPrompt | None = None,
         hook_executor: HookExecutor | None = None,
         tool_metadata: dict[str, object] | None = None,
+        allowed_tools: list[str] | None = None,
     ) -> None:
         self._api_client = api_client
         self._tool_registry = tool_registry
@@ -51,6 +52,7 @@ class QueryEngine:
         self._ask_user_prompt = ask_user_prompt
         self._hook_executor = hook_executor
         self._tool_metadata = tool_metadata or {}
+        self._allowed_tools = allowed_tools or []
         self._messages: list[ConversationMessage] = []
         self._cost_tracker = CostTracker()
 
