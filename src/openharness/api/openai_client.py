@@ -397,6 +397,7 @@ class OpenAICompatibleClient:
             if any(k in msg for k in (
                 "tokens per day", "token_quota_exceeded", "quota",
                 "tokens_limit_reached", "tokens per minute limit",
+                "limit_rpm", "limit_rpd", "limit_tpd",
             )):
                 return False
             return True
