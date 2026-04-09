@@ -474,7 +474,7 @@ async def run_query(
                     messages=messages,
                     system_prompt=context.system_prompt,
                     max_tokens=context.max_tokens,
-                    tools=context.tool_registry.to_api_schema(),
+                    tools=context.tool_registry.to_api_schema(allowed=context.allowed_tools),
                 )
             ):
                 if isinstance(event, ApiTextDeltaEvent):
